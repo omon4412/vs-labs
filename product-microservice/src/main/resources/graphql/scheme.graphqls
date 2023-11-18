@@ -1,0 +1,34 @@
+type ProductDto {
+    productCode: String
+    name: String!
+    weight: Float!
+    description: String
+    price: Float!
+}
+
+input ProductDtoUpdate {
+    productCode: String!
+    name: String
+    weight: Float
+    description: String
+    price: Float
+}
+
+input ProductDtoCreate {
+    productCode: String
+    name: String!
+    weight: Float!
+    description: String!
+    price: Float!
+}
+
+type Query {
+    getProduct(productId: String!): ProductDto!
+    findAll: [ProductDto]!
+}
+
+type Mutation {
+    deleteProduct(productId: String!) : Boolean
+    addProduct(productDto: ProductDtoCreate!) : ProductDto
+    updateProduct(productDto: ProductDtoUpdate!) : ProductDto
+}

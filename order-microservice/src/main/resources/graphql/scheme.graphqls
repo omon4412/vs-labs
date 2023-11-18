@@ -1,0 +1,41 @@
+type Order{
+    id:ID!
+    orderDate:String!
+    productItemList:[ProductItem]
+}
+
+type ProductItem{
+    productCode:String
+    productName:String
+    quantity:Int
+    price:Float
+}
+
+input ProductItemInput{
+    productCode:String!
+    productName:String
+    quantity:Int!
+    price:Float!
+}
+
+
+type OrderResponse {
+    result:Boolean
+    message:String
+    order:Order
+}
+
+type Query {
+    getOrder(orderId: String!): Order!
+    findAll: [Order]
+    getProductItemToOrder(orderId: String!, itemId: String!): ProductItem
+}
+
+type Mutation {
+    addOrder : Order
+    deleteOrder(orderId: String!) : Boolean
+    addProductItemToOrder(orderId: String!, productItem: ProductItemInput) : Order
+    deleteProductItemToOrder(orderId: String!, itemId: String!) : Boolean
+    deleteProductItemsToOrder(orderId: String!) : Boolean
+    makeOrder(orderId: String!) : OrderResponse
+}

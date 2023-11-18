@@ -1,0 +1,127 @@
+version: '3'
+services:
+  api-gateway:
+    build: ./api-gateway
+    image: api-gateway_image
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+      - "7080:7080"
+    expose:
+      - "8080"
+    depends_on:
+      - eureka-server
+    environment:
+      SPRING_APPLICATION_JSON: '{"eureka":{"client":{"serviceUrl":{"defaultZone":"http://eureka-server:8761/eureka"}}}}'
+
+  eureka-server:
+    build: ./netflix-eureka-service
+    image: eureka_image
+    container_name: eureka
+    ports:
+      - "8761:8761"
+      - "7761:7761"
+    expose:
+      - "8761"
+
+  product-service:
+    build: ./product-microservice
+    image: product_image
+    container_name: product-service
+    ports:
+      - "8081:8081"
+      - "7081:7081"
+    expose:
+      - "8081"
+    depends_on:
+      - eureka-server
+      - api-gateway
+    environment:
+      SPRING_APPLICATION_JSON: '{"eureka":{"client":{"serviceUrl":{"defaultZone":"http://eureka-server:8761/eureka"}}}}'
+
+  inventory-service:
+    build: ./inventory-microservice
+    image: inventory_image
+    container_name: inventory-service
+    ports:
+      - "8082:8082"
+      - "7082:7082"
+    expose:
+      - "8082"
+    depends_on:
+      - eureka-server
+      - api-gateway
+    environment:
+      SPRING_APPLICATION_JSON: '{"eureka":{"client":{"serviceUrl":{"defaultZone":"http://eureka-server:8761/eureka"}}}}'
+
+  notification-service:
+    build: ./notification-microservice
+    image: notification_image
+    container_name: notification-service
+    ports:
+      - "8084:8084"
+      - "7084:7084"
+    depends_on:
+      - eureka-server
+      - api-gateway
+      - kafka1
+      - kafka2
+    environment:
+      SPRING_APPLICATION_JSON: '{"eureka":{"client":{"serviceUrl":{"defaultZone":"http://eureka-server:8761/eureka"}}}}'
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka1:9092,kafka2:9093
+
+  order-service:
+    build: ./order-microservice
+    image: order_image
+    container_name: order-service
+    ports:
+      - "8083:8083"
+      - "7083:7083"
+    depends_on:
+      - eureka-server
+      - api-gateway
+      - kafka1
+      - kafka2
+    environment:
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka1:9092,kafka2:9093
+      - SPRING_APPLICATION_JSON={"eureka":{"client":{"serviceUrl":{"defaultZone":"http://eureka-server:8761/eureka"}}}}
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "22181:2181"
+    restart: always
+
+  kafka1:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    restart: always
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_ADVERTISED_HOST_NAME: kafka1
+
+  kafka2:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - "9093:9093"
+    restart: always
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9093,PLAINTEXT_HOST://localhost:29093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2

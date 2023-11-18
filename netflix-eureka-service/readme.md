@@ -1,0 +1,1 @@
+<h1>Netflix Eureka service</h1>
