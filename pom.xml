@@ -21,5 +21,6 @@
         <module>notification-microservice</module>
         <module>order-microservice</module>
         <module>product-microservice</module>
+        <module>grpc</module>
     </modules>
 </project>

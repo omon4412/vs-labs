@@ -15,5 +15,8 @@ public interface InventoryMapper {
     Inventory toInventory(InventoryDto inventoryDto);
 
     @Mapping(target = "productCode", source = "productCode")
+    com.vs.grpc.Inventory toGRPCInventory(Inventory inventory);
+
+    @Mapping(target = "productCode", source = "productCode")
     InventoryDto toInventoryDto(Inventory inventory);
 }

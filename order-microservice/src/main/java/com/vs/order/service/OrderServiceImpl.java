@@ -1,23 +1,27 @@
 package com.vs.order.service;
 
+import com.vs.grpc.OrderIdRequest;
+import com.vs.grpc.InventoryServiceGrpc;
 import com.vs.order.Producer;
 import com.vs.order.exception.NotFoundException;
 import com.vs.order.exception.ServiceNotAvailableException;
 import com.vs.order.model.*;
 import com.vs.order.repository.OrderRepository;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import javax.annotation.PostConstruct;
 import java.net.URI;
 import java.rmi.server.ServerNotActiveException;
 import java.time.LocalDateTime;
@@ -39,6 +43,22 @@ public class OrderServiceImpl implements OrderService {
     private final DiscoveryClient discoveryClient;
 
     private final Producer kafkaProducer;
+
+    private InventoryServiceGrpc.InventoryServiceBlockingStub orderServiceBlockingStub;
+
+    @Value("${inventory.grpc.address}")
+    private String inventoryGrpcAddress;
+    @Value("${inventory.grpc.port}")
+    private int inventoryGrpcPort;
+
+    @PostConstruct
+    private void init() {
+        ManagedChannel managedChannel = ManagedChannelBuilder
+                .forAddress(inventoryGrpcAddress, inventoryGrpcPort).usePlaintext().build();
+
+        orderServiceBlockingStub =
+                InventoryServiceGrpc.newBlockingStub(managedChannel);
+    }
 
     @Transactional
     @Override
@@ -174,27 +194,11 @@ public class OrderServiceImpl implements OrderService {
             return orderResponse;
         }
 
-        List<ServiceInstance> serviceInstances =
-                discoveryClient.getInstances("inventory-service");
-        if (serviceInstances.size() == 0) {
-            throw new ServiceNotAvailableException("Сервис склад недоступен");
-        }
-        ServiceInstance serviceInstance = serviceInstances.get(0);
-        URI serviceInstanceUri = serviceInstance.getUri();
-        Collection<Inventory> productFromServer = webClient
-                .post()
-                .uri(serviceInstanceUri + "/api/v1/inventory/check/{orderId}", orderId)
-                .contentType(MediaType.APPLICATION_JSON)
-                //.body(BodyInserters.fromValue(order))
-                .retrieve()
-                .onStatus(HttpStatus::is5xxServerError,
-                        error -> Mono.error(new ServerNotActiveException("Сервис склад недоступен")))
-                .bodyToFlux(Inventory.class)
-                .doOnError(error -> {
-                    log.error(error.getMessage());
-                    throw new NotFoundException(error.getMessage());
-                }).collectList()
-                .block();
+        OrderIdRequest request = OrderIdRequest.newBuilder()
+                .setOrderId(orderId)
+                .build();
+        Collection<com.vs.grpc.Inventory> productFromServer = orderServiceBlockingStub.checkInventory(request)
+                .getTestList();
 
         if (productFromServer.size() == 0) {
             orderResponse.setResult(false);
@@ -217,16 +221,18 @@ public class OrderServiceImpl implements OrderService {
                             return inv;
                         }
                 ).collect(Collectors.toList()));
-        Void t = webClient
-                .post()
-                .uri(serviceInstanceUri + "/api/v1/inventory/reserve")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromValue(wrapper))
-                .retrieve()
-                .onStatus(HttpStatus::is5xxServerError,
-                        error -> Mono.error(new ServerNotActiveException("Сервис склад недоступен")))
-                .bodyToMono(Void.class)
-                .block();
+
+
+        com.vs.grpc.OrderAndInventoryWrapper request2 = com.vs.grpc.OrderAndInventoryWrapper.newBuilder()
+                .setOrderId(wrapper.getOrderId())
+                .addAllInventoryList(wrapper.getInventoryList().stream().map((i) -> com.vs.grpc.Inv.newBuilder()
+                        .setCount(i.getCount())
+                        .setPrice(i.getPrice())
+                        .setProductCode(i.getProductCode())
+                        .build()).collect(Collectors.toList()))
+                .build();
+
+        com.vs.grpc.ProductsResponse t = orderServiceBlockingStub.reserveInventory(request2);
 
         List<ProductItem> result = order.getProductItemList().stream()
                 .filter(product -> productFromServer.stream()

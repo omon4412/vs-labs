@@ -7,7 +7,6 @@ public class Inventory {
 
     private int id;
 
-
     private String productCode;
 
     private int count;

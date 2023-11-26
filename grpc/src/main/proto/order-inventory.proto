@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package orders_inventory;
+
+option java_package = "com.vs.grpc";
+option java_multiple_files = true;
+
+message OrderIdRequest {
+  string orderId = 1;
+}
+
+message Inventory{
+  int32 id = 1;
+  string productCode = 2;
+  int32 count = 3;
+  double price = 4;
+  Product product = 5;
+}
+
+message Product {
+  string productCode = 1;
+  string name = 2;
+  double weight = 3;
+  string description = 4;
+  double price = 5;
+}
+
+message ProductsResponse {
+  repeated Inventory test = 1;
+}
+
+message Inv {
+  string productCode = 1;
+  int32 count = 2;
+  double price = 3;
+}
+
+message OrderAndInventoryWrapper {
+  string orderId = 1;
+  repeated Inv inventoryList = 2;
+}
+
+service InventoryService {
+  rpc checkInventory(OrderIdRequest) returns (ProductsResponse) {};
+  rpc reserveInventory(OrderAndInventoryWrapper) returns (ProductsResponse) {};
+};
