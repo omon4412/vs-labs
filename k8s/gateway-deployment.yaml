@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-deployment
+  labels:
+    app: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+        - name: gateway
+          image: omon4412/gateway_image:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: eureka.client.serviceUrl.defaultZone
+              value: http://eureka-0.eureka:8761/eureka/

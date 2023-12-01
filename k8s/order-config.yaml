@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-deployment
+  labels:
+    app: order
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order
+  template:
+    metadata:
+      labels:
+        app: order
+    spec:
+      containers:
+        - name: order
+          image: omon4412/order_image:latest
+          ports:
+            - containerPort: 8083
+            - containerPort: 9091
+          env:
+            - name: eureka.client.serviceUrl.defaultZone
+              value: http://eureka-0.eureka:8761/eureka/
+            - name: eureka.instance.preferIpAddress
+              value: "true"
+            - name: spring.kafka.bootstrap-servers
+              value: kafkasv-0.kafkasv.default.svc.cluster.local:9092
+            - name: spring.kafka.consumer.group-id
+              value: vsGroup
+            - name: topic.name
+              value: notification
+            - name: inventory.grpc.address
+              value: inventory-service.default.svc.cluster.local
+            - name: inventory.grpc.port
+              value: '9090'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+spec:
+  selector:
+    app: order
+  ports:
+    - name: port-main
+      protocol: TCP
+      port: 8083
+      targetPort: 8083
+    - name: port-grpc
+      protocol: TCP
+      port: 9091
+      targetPort: 9091

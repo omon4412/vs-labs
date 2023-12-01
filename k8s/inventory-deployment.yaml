@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-deployment
+  labels:
+    app: inventory
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: inventory
+  template:
+    metadata:
+      labels:
+        app: inventory
+    spec:
+      containers:
+        - name: inventory
+          image: omon4412/inventory_image:latest
+          ports:
+            - containerPort: 8082
+            - containerPort: 9090
+          env:
+            - name: eureka.client.serviceUrl.defaultZone
+              value: http://eureka-0.eureka:8761/eureka/
+            - name: eureka.instance.preferIpAddress
+              value: "true"

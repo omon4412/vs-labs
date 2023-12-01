@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-deployment
+  labels:
+    app: product
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product
+  template:
+    metadata:
+      labels:
+        app: product
+    spec:
+      containers:
+        - name: product
+          image: omon4412/product_image:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: eureka.client.serviceUrl.defaultZone
+              value: http://eureka-0.eureka:8761/eureka/
+            - name: eureka.instance.preferIpAddress
+              value: "true"
