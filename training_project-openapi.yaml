@@ -1,0 +1,439 @@
+openapi: "3.0.3"
+info:
+  title: "training_project API"
+  description: "training_project API"
+  version: "1.0.0"
+servers:
+  - url: "https://training_project"
+paths:
+  /inventory:
+    get:
+      summary: "GET inventory"
+      operationId: "findAll"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/InventoryDto"
+    post:
+      summary: "POST inventory"
+      operationId: "addProduct"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryDto"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/InventoryDto"
+  /inventory/check/{orderId}:
+    post:
+      summary: "POST inventory/check/{orderId}"
+      operationId: "checkPositions"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/InventoryDto"
+  /inventory/reserve:
+    post:
+      summary: "POST inventory/reserve"
+      operationId: "reservePositions"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderAndInventoryWrapper"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+  /inventory/{productCode}:
+    get:
+      summary: "GET inventory/{productCode}"
+      operationId: "getProduct"
+      parameters:
+        - name: "productCode"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/InventoryDto"
+  /inventory/{productId}:
+    delete:
+      summary: "DELETE inventory/{productId}"
+      operationId: "deleteProduct"
+      parameters:
+        - name: "productId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+  /api/v1/kafka:
+    post:
+      summary: "POST api/v1/kafka"
+      operationId: "testNotification"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: "string"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "string"
+  /orders:
+    get:
+      summary: "GET orders"
+      operationId: "findAll"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/Order"
+    post:
+      summary: "POST orders"
+      operationId: "addOrder"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Order"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Order"
+  /orders/{orderId}:
+    get:
+      summary: "GET orders/{orderId}"
+      operationId: "getOrder"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Order"
+    delete:
+      summary: "DELETE orders/{orderId}"
+      operationId: "deleteOrder"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+  /orders/{orderId}/items:
+    get:
+      summary: "GET orders/{orderId}/items"
+      operationId: "getProductItemsToOrder"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/ProductItem"
+    post:
+      summary: "POST orders/{orderId}/items"
+      operationId: "addProductItemToOrder"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductItem"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/Order"
+    delete:
+      summary: "DELETE orders/{orderId}/items"
+      operationId: "deleteProductItemsToOrder"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+  /orders/{orderId}/items/{itemId}:
+    get:
+      summary: "GET orders/{orderId}/items/{itemId}"
+      operationId: "getProductItemToOrder"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+        - name: "itemId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ProductItem"
+    delete:
+      summary: "DELETE orders/{orderId}/items/{itemId}"
+      operationId: "deleteProductItemToOrder"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+        - name: "itemId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+  /orders/{orderId}/make:
+    post:
+      summary: "POST orders/{orderId}/make"
+      operationId: "makeOrder"
+      parameters:
+        - name: "orderId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/OrderResponse"
+  /api/v1/products:
+    get:
+      summary: "GET api/v1/products"
+      operationId: "findAll"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/ProductDto"
+    put:
+      summary: "PUT api/v1/products"
+      operationId: "updateProduct"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductDto"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ProductDto"
+    post:
+      summary: "POST api/v1/products"
+      operationId: "addProduct"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductDto"
+        required: true
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ProductDto"
+  /api/v1/products/{productId}:
+    get:
+      summary: "GET api/v1/products/{productId}"
+      operationId: "getProduct"
+      parameters:
+        - name: "productId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/ProductDto"
+    delete:
+      summary: "DELETE api/v1/products/{productId}"
+      operationId: "deleteProduct"
+      parameters:
+        - name: "productId"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+      responses:
+        "200":
+          description: "OK"
+components:
+  schemas:
+    InventoryDto:
+      type: "object"
+      properties:
+        productCode:
+          type: "string"
+        count:
+          type: "integer"
+          format: "int32"
+        price:
+          type: "number"
+          format: "double"
+    Inv:
+      type: "object"
+      properties:
+        productCode:
+          type: "string"
+        count:
+          type: "integer"
+          format: "int32"
+        price:
+          type: "integer"
+          format: "int32"
+    OrderAndInventoryWrapper:
+      type: "object"
+      properties:
+        orderId:
+          type: "string"
+        inventoryList:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Inv"
+    ProductItem:
+      type: "object"
+      properties:
+        productCode:
+          type: "string"
+        productName:
+          type: "string"
+        quantity:
+          type: "integer"
+          format: "int32"
+        price:
+          type: "number"
+          format: "double"
+    Order:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        orderDate:
+          type: "string"
+          format: "date-time"
+        productItemList:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ProductItem"
+    OrderResponse:
+      type: "object"
+      properties:
+        result:
+          type: "boolean"
+        message:
+          type: "string"
+        order:
+          $ref: "#/components/schemas/Order"
+    ProductDto:
+      type: "object"
+      properties:
+        productCode:
+          type: "string"
+        name:
+          type: "string"
+        weight:
+          type: "number"
+          format: "double"
+        description:
+          type: "string"
+        price:
+          type: "number"
+          format: "double"
